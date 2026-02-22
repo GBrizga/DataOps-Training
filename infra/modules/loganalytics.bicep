@@ -42,7 +42,15 @@ resource adfDiagnostic 'Microsoft.Insights/diagnosticSettings@2021-05-01-preview
     workspaceId: logAnalytics.id
     logs: [
       {
-        category: 'allLogs'
+        category: 'ActivityRuns'
+        enabled: true
+      }
+      {
+        category: 'PipelineRuns'
+        enabled: true
+      }
+      {
+        category: 'TriggerRuns'
         enabled: true
       }
     ]
@@ -63,7 +71,27 @@ resource databricksDiagnostic 'Microsoft.Insights/diagnosticSettings@2021-05-01-
     workspaceId: logAnalytics.id
     logs: [
       {
-        category: 'allLogs'
+        category: 'audit'
+        enabled: true
+      }
+      {
+        category: 'workspace'
+        enabled: true
+      }
+      {
+        category: 'accounts'
+        enabled: true
+      }
+      {
+        category: 'clusters'
+        enabled: true
+      }
+      {
+        category: 'dbfs'
+        enabled: true
+      }
+      {
+        category: 'jobs'
         enabled: true
       }
     ]
