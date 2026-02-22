@@ -72,7 +72,6 @@ module logAnalytics 'modules/loganalytics.bicep' = {
         location: location
         tags: tags
         dataFactoryName: dataFactoryName
-        databricksWorkspaceName: databricksWorkspaceName
     }
 }
 
