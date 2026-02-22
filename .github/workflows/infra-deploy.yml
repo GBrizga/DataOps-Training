@@ -38,11 +38,11 @@ jobs:
               run: az bicep build --file infra/main.bicep
 
             - name: Validate Template
-              run:
+              run: |
                 az deployment group validate \
-                    --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
-                    --template-file infra/main.bicep \
-                    --parameters infra/parameters/parameters.json
+                  --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+                  --template-file infra/main.bicep \
+                  --parameters infra/parameters/parameters.json
 
     deploy:
         name: Deploy to Azure
