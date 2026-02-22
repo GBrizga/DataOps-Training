@@ -2,7 +2,7 @@
     "contentVersion": "1.0.0.0",
     "parameters": {
         "projectName": {
-            "value": "dataops"
+            "value": "gbrizga-dataops"
         }
     }
 }
