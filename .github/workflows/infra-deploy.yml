@@ -1,0 +1,112 @@
+name: Deploy Azure resources with Bicep
+
+on:
+    push:
+        branches: [main]
+        paths:
+            - 'infra/**'
+    pull_request:
+        branches: [main]
+        paths:
+            - 'infra/**'
+    workflow_dispatch:
+
+permissions:
+    contents: read
+    id-token: write
+
+env:
+    AZURE_RESOURCE_GROUP: rg-dataops
+    AZURE_LOCATION: northeurope
+
+jobs:
+    validate:
+        name: Validate Bicep templates
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+            
+            - name: Azure Login
+              uses: azure/login@v2
+              with:
+                client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+
+            - name: Bicep Lint
+              run: az bicep build --file infra/main.bicep
+
+            - name: Validate Template
+              run:
+                az deployment group validate \
+                    --resource-group ${{ env.AZURE_RESOURCE_GROUP }} \
+                    --template-file infra/main.bicep \
+                    --parameters infra/parameters/parameters.json
+
+    deploy:
+        name: Deploy to Azure
+        needs: validate
+        if: github.event_name == 'push'
+        runs-on: ubuntu-latest
+        steps:
+            - name: Checkout code
+              uses: actions/checkout@v4
+
+            - name: Azure Login
+              uses: azure/login@v2
+              with:
+                client-id: ${{ secrets.AZURE_CLIENT_ID }}
+                tenant-id: ${{ secrets.AZURE_TENANT_ID }}
+                subscription-id: ${{ secrets.AZURE_SUBSCRIPTION_ID }}
+            
+            - name: Check if Resource Group exists
+              id: check_rg
+              run: |
+                if az group show --name ${{ env.AZURE_RESOURCE_GROUP}} &>/dev/null; then
+                  echo "exists=true" >> "$GITHUB_OUTPUT"
+                  echo "Resource group '${{ env.AZURE_RESOURCE_GROUP}}' already exists."
+                else
+                  echo "exists=false" >> "$GITHUB_OUTPUT"
+                  echo "Resource group '${{ env.AZURE_RESOURCE_GROUP}}' does not exist."
+                fi
+            
+            - name: Create Resource Group
+              if: steps.check_rg.outputs.exists == 'false'
+              run: |
+                echo "Creating resource group '${{ env.AZURE_RESOURCE_GROUP}}' in location '${{ env.AZURE_LOCATION}}'..."
+                az group create --name ${{ env.AZURE_RESOURCE_GROUP}} --location ${{ env.AZURE_LOCATION}} --tags project=dataops managedBy=bicep
+            
+            - name: Chec existing resources in Resource Group
+              id: check_resources
+              run: |
+                EXISTING=$(az resource list \
+                  --resource-group ${{ env.AZURE_RESOURCE_GROUP}} \
+                  --query '[].{name:name, type:type}' \
+                  -o table 2>/dev/null || echo "")
+                echo "--- Existing resources ---"
+                echo "$EXISTING"
+                RESOURCE_COUNT=$(az resource list \
+                  --resource-group ${{ env.AZURE_RESOURCE_GROUP}} \
+                  --query 'length(@)' -o tsv 2>/dev/null || echo "0")
+                echo "resource_count=$RESOURCE_COUNT" >> "$GITHUB_OUTPUT"
+                echo "Total existing resources: $RESOURCE_COUNT"
+
+            - name: Deploy Bicep Template
+              run: |
+                echo "Deploying with ${{ steps.check_resources.outputs.resource_count }} existing resources in the resource group"
+                az deployment group create \
+                  --resource-group ${{ env.AZURE_RESOURCE_GROUP}} \
+                  --template-file infra/main.bicep \
+                  --parameters infra/parameters/parameters.json \
+                  --mode Incremental \
+                  --name "deploy-$(date +%Y%m%d%H%M%S)"
+                
+            - name: Output Deployment Results
+              run: |
+                az deployment group show \
+                  --resource-group ${{ env.AZURE_RESOURCE_GROUP}} \
+                  --name "$(az deployment group list --resource-group ${{ env.AZURE_RESOURCE_GROUP}} --query '[0].name' -o tsv)" \
+                  --query properties.outputs
+
+    
