@@ -23,8 +23,7 @@ resource keyVault 'Microsoft.KeyVault/vaults@2025-05-01' = {
       family: 'A'
       name: 'standard'
     }
-    enableSoftDelete: true
-    softDeleteRetentionInDays: 7
+    enableSoftDelete: false
     enableRbacAuthorization: true
     accessPolicies: [
       {
