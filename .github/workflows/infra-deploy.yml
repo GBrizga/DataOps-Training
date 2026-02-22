@@ -1,14 +1,6 @@
 name: Deploy Azure resources with Bicep
 
 on:
-    push:
-        branches: [main]
-        paths:
-            - 'infra/**'
-    pull_request:
-        branches: [main]
-        paths:
-            - 'infra/**'
     workflow_dispatch:
 
 permissions:

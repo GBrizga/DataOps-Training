@@ -69,29 +69,9 @@ resource databricksDiagnostic 'Microsoft.Insights/diagnosticSettings@2021-05-01-
   scope: existingDatabricks
   properties: {
     workspaceId: logAnalytics.id
-    logs: [
+    metrics: [
       {
-        category: 'audit'
-        enabled: true
-      }
-      {
-        category: 'workspace'
-        enabled: true
-      }
-      {
-        category: 'accounts'
-        enabled: true
-      }
-      {
-        category: 'clusters'
-        enabled: true
-      }
-      {
-        category: 'dbfs'
-        enabled: true
-      }
-      {
-        category: 'jobs'
+        category: 'AllMetrics'
         enabled: true
       }
     ]
