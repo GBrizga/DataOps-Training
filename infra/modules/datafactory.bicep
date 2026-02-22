@@ -23,7 +23,7 @@ resource dataFactory 'Microsoft.DataFactory/factories@2018-06-01' = {
 output dataFactoryId string = dataFactory.id
 
 @description('The name of the ADF')
-output dataFactoryNameOutput string = dataFactory.name
+output dataFactoryName string = dataFactory.name
 
 @description('The principal ID of the ADF managed identity')
 output dataFactoryPrincipalId string = dataFactory.identity.principalId
